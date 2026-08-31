@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOC MLS/MLT Study Guide — Blood Banking Quiz</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="quiz-header">
+    <div class="header-content">
+        <h1>Blood Banking — BOC Study Guide 7e</h1>
+        <div class="stats-timer-row">
+            <div id="timer">Time: 00:00:00</div>
+            <div class="counters">
+                <span>Total: <b id="total-count">0</b></span>
+                <span>Answered: <b id="answered-count">0</b></span>
+                <span>Correct: <b id="correct-count">0</b></span>
+                <span>Incorrect: <b id="incorrect-count">0</b></span>
+            </div>
+            <div class="controls">
+                <button id="finish-btn">Finish</button>
+            </div>
+        </div>
+        <div class="progress-container"><div id="progress-bar"></div></div>
+    </div>
+</header>
+
+<div id="chapter-select">
+    <label for="section-filter">اختر القسم (Section):</label>
+    <select id="section-filter">
+        <option value="all">كل الأسئلة المتوفرة حالياً</option>
+    </select>
+</div>
+
+<main id="quiz-container"></main>
+
+<div id="results-modal" class="modal hidden">
+    <div class="modal-content">
+        <h2>النتيجة</h2>
+        <p>الإجابات الصحيحة: <span id="res-correct">0</span></p>
+        <p>الإجابات الخاطئة: <span id="res-incorrect">0</span></p>
+        <p>لم تُجب: <span id="res-unanswered">0</span></p>
+        <p>النسبة: <span id="final-percentage">0</span>%</p>
+        <div class="modal-actions">
+            <button id="retest-incorrect-btn">إعادة الأسئلة الخاطئة فقط</button>
+            <button id="restart-full-btn">إعادة الاختبار كاملاً (عشوائي)</button>
+        </div>
+    </div>
+</div>
+
+<script src="quiz.js"></script>
+</body>
+</html>
