@@ -13,7 +13,8 @@ const resultsModal = document.getElementById('results-modal');
 const sectionFilter = document.getElementById('section-filter');
 
 async function loadData() {
-    const res = await fetch('./quiz_data.json');
+    // 🔥 إصلاح مشكلة الكاش
+    const res = await fetch('./quiz_data.json?v=' + Date.now());
     quizData = await res.json();
     populateSections();
 }
