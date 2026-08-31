@@ -35,8 +35,7 @@ async function loadData() {
       if (!q.options && (q.choices || q.answers)) q.options = q.choices || q.answers;
 
       if (!q.image) {
-        if (q.table_image) q.image = q.table_image;
-        else if (q.table_image_data && typeof q.table_image_data === 'string' && q.table_image_data.startsWith('data:image')) {
+        if (q.table_image_data && typeof q.table_image_data === 'string' && q.table_image_data.startsWith('data:image')) {
           try {
             const parts = q.table_image_data.split(',');
             const mimeMatch = parts[0].match(/:(.*?);/);
@@ -49,9 +48,21 @@ async function loadData() {
             q.image = URL.createObjectURL(blob);
           } catch (e) {
             console.warn('Failed to convert Base64 image for id', q.id, e);
-            q.image = null;
+            q.image = q.table_image || null; // fallback to external path if base64 conversion fails
           }
+        } else if (q.table_image) {
+          q.image = q.table_image;
         }
+      }
+
+      // إزالة placeholder [TABLE] من نص السؤال لأن الصورة تُعرض تلقائياً تحت السؤال
+      // وتحويل الأسطر الجديدة المتبقية إلى <br> عشان تظهر بشكل صحيح
+      if (q.question && typeof q.question === 'string') {
+        q.question = q.question
+          .replace(/\[TABLE\]/g, '')
+          .replace(/\n{2,}/g, '\n')
+          .trim()
+          .replace(/\n/g, '<br>');
       }
 
       return q;
