@@ -61,10 +61,16 @@ function render(questions) {
         const reviewBadge = q.needs_review ? '<span class="review-badge">⚠️ يحتاج مراجعة</span>' : '';
         block.innerHTML = `
             <div class="question-meta">${q.chapter || ''} ${q.section ? '— ' + q.section : ''} | #${q.id} ${reviewBadge}</div>
+
             <div class="question-text">${i + 1}. ${q.question}</div>
+
+            <!-- ⭐ عرض الصورة هنا -->
+            ${q.image ? `<img src="${q.image}" class="question-image">` : ''}
+
             <ul class="options-list">
                 ${Object.entries(q.options).map(([k, v]) => `<li class="option-item" data-key="${k}">${k}. ${v}</li>`).join('')}
             </ul>
+
             <div class="explanation-box hidden"><strong>الشرح:</strong> ${q.explanation || 'لا يوجد شرح متاح.'}</div>
         `;
 
