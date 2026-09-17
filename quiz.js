@@ -317,11 +317,13 @@ document.getElementById('finish-btn').addEventListener('click', () => {
   const total = parseInt(document.getElementById('total-count').innerText) || 0;
   const unanswered = total - answeredCount;
   const pct = answeredCount ? ((correctCount / answeredCount) * 100).toFixed(1) : 0;
+  const scoreOutOf800 = answeredCount ? Math.round((correctCount / answeredCount) * 800) : 0;
 
   document.getElementById('res-correct').innerText = correctCount;
   document.getElementById('res-incorrect').innerText = incorrectCount;
   document.getElementById('res-unanswered').innerText = unanswered;
   document.getElementById('final-percentage').innerText = pct;
+  document.getElementById('final-score').innerText = scoreOutOf800;
 
   // اظهر زر المتابعة فقط لو فيه أسئلة ما انحلت
   continueBtn.style.display = unanswered > 0 ? 'inline-block' : 'none';
