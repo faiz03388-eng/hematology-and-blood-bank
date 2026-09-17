@@ -30,7 +30,7 @@ body {
 .counters span { margin-right: 12px; color: #94a3b8; }
 .counters b { color: #f1f5f9; }
 
-#finish-btn, .modal-actions button, #chapter-select button {
+#finish-btn, #pause-btn, .modal-actions button, #chapter-select button {
     background: #3b82f6;
     color: white;
     border: none;
@@ -39,7 +39,29 @@ body {
     cursor: pointer;
     font-size: 0.9rem;
 }
-#finish-btn:hover, .modal-actions button:hover { background: #2563eb; }
+#finish-btn:hover, #pause-btn:hover, .modal-actions button:hover { background: #2563eb; }
+#pause-btn { background: #475569; }
+#pause-btn:hover { background: #334155; }
+#pause-btn.active { background: #d97706; }
+#pause-btn.active:hover { background: #b45309; }
+
+#paused-banner {
+    max-width: 800px;
+    margin: 12px auto 0;
+    padding: 10px 16px;
+    background: #78350f;
+    color: #fcd34d;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+#quiz-container.paused {
+    pointer-events: none;
+    opacity: 0.4;
+    filter: blur(1.5px);
+    user-select: none;
+}
 
 .progress-container {
     background: #334155;
