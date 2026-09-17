@@ -19,12 +19,15 @@
                 <span>Incorrect: <b id="incorrect-count">0</b></span>
             </div>
             <div class="controls">
-                <button id="finish-btn">Finish</button>
+                <button id="pause-btn">⏸️ إيقاف مؤقت</button>
+                <button id="finish-btn">إنهاء وعرض النتيجة</button>
             </div>
         </div>
         <div class="progress-container"><div id="progress-bar"></div></div>
     </div>
 </header>
+
+<div id="paused-banner" class="hidden">⏸️ الاختبار متوقف مؤقتاً — اضغط "استئناف" للمتابعة</div>
 
 <div id="chapter-select">
     <label for="section-filter">اختر القسم (Section):</label>
@@ -41,8 +44,9 @@
         <p>الإجابات الصحيحة: <span id="res-correct">0</span></p>
         <p>الإجابات الخاطئة: <span id="res-incorrect">0</span></p>
         <p>لم تُجب: <span id="res-unanswered">0</span></p>
-        <p>النسبة: <span id="final-percentage">0</span>%</p>
+        <p>النسبة (من الأسئلة اللي جاوبتها فقط): <span id="final-percentage">0</span>%</p>
         <div class="modal-actions">
+            <button id="continue-btn">متابعة الأسئلة المتبقية</button>
             <button id="retest-incorrect-btn">إعادة الأسئلة الخاطئة فقط</button>
             <button id="restart-full-btn">إعادة الاختبار كاملاً (عشوائي)</button>
         </div>
