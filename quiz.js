@@ -38,7 +38,7 @@ function saveProgress() {
       incorrectQuestions
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) { console.warn('تعذر حفظ التقدم:', e); }
+  } catch (e) { console.warn('تعذّر حفظ التقدم:', e); }
 }
 
 function loadSavedProgress() {
@@ -92,7 +92,7 @@ async function loadData() {
         }
       }
 
-      // إزالة placeholder [TABLE] من نص السؤال لأن الصورة تُعرض تلقائيا تحت السؤال
+      // إزالة placeholder [TABLE] من نص السؤال لأن الصورة تُعرض تلقائياً تحت السؤال
       // وتحويل الأسطر الجديدة المتبقية إلى <br> عشان تظهر بشكل صحيح
       if (q.question && typeof q.question === 'string') {
         q.question = q.question
@@ -194,4 +194,162 @@ function render(questions) {
     block.innerHTML = `
       <div class="question-meta">${q.chapter || ''} ${q.section ? '— ' + q.section : ''} | #${q.id} ${reviewBadge}</div>
 
-      <div class="question-text">${i + 1}. ${q.question || ''}
+      <div class="question-text">${i + 1}. ${q.question || ''}</div>
+
+      ${q.image ? `<img src="${q.image}" class="question-image" alt="question image">` : ''}
+
+      <ul class="options-list">
+        ${Object.entries(q.options || {}).map(([k, v]) => `<li class="option-item" data-key="${k}">${k}. ${v}</li>`).join('')}
+      </ul>
+
+      <div class="explanation-box hidden"><strong>الشرح:</strong> ${q.explanation || 'لا يوجد شرح متاح.'}</div>
+    `;
+
+    block.querySelectorAll('.option-item').forEach(opt => {
+      opt.addEventListener('click', () => handleAnswer(opt, block, q.id));
+    });
+
+    // لو السؤال هذا محفوظ من قبل (متابعة اختبار سابق)، أظهره كأنه مجاوَب
+    const prev = savedAnswers[q.id];
+    if (prev) {
+      const options = block.querySelectorAll('.option-item');
+      options.forEach(o => {
+        o.classList.add('locked');
+        if (o.dataset.key === prev.selectedKey) {
+          o.classList.add(prev.correct ? 'correct' : 'incorrect');
+        }
+        if (!prev.correct && o.dataset.key === block.dataset.answer) {
+          o.classList.add('correct');
+        }
+      });
+      const expl = block.querySelector('.explanation-box');
+      if (expl) expl.classList.remove('hidden');
+    }
+
+    container.appendChild(block);
+  });
+
+  document.getElementById('total-count').innerText = questions.length;
+  updateStats();
+}
+
+function handleAnswer(selected, block, qId) {
+  if (isPaused) return;
+  if (selected.classList.contains('locked')) return;
+  const correctKey = block.dataset.answer;
+  const options = block.querySelectorAll('.option-item');
+  options.forEach(o => o.classList.add('locked'));
+
+  let isCorrect;
+  if (selected.dataset.key === correctKey) {
+    selected.classList.add('correct');
+    correctCount++;
+    incorrectQuestions = incorrectQuestions.filter(id => id !== qId);
+    isCorrect = true;
+  } else {
+    selected.classList.add('incorrect');
+    options.forEach(o => { if (o.dataset.key === correctKey) o.classList.add('correct'); });
+    incorrectCount++;
+    if (!incorrectQuestions.includes(qId)) incorrectQuestions.push(qId);
+    isCorrect = false;
+  }
+  answeredCount++;
+  savedAnswers[qId] = { selectedKey: selected.dataset.key, correct: isCorrect };
+  updateStats();
+  const expl = block.querySelector('.explanation-box');
+  if (expl) expl.classList.remove('hidden');
+  saveProgress();
+}
+
+function updateStats() {
+  answeredDisplay.innerText = answeredCount;
+  correctDisplay.innerText = correctCount;
+  incorrectDisplay.innerText = incorrectCount;
+  const total = parseInt(document.getElementById('total-count').innerText) || 1;
+  progressBar.style.width = `${(answeredCount / total) * 100}%`;
+}
+
+function resetStats(total) {
+  answeredCount = 0; correctCount = 0; incorrectCount = 0; timerSeconds = 0;
+  document.getElementById('total-count').innerText = total;
+  updateStats();
+}
+
+function updateTimerDisplay() {
+  const h = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
+  const m = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
+  const s = String(timerSeconds % 60).padStart(2, '0');
+  timerDisplay.innerText = `Time: ${h}:${m}:${s}`;
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (isPaused) return;
+    timerSeconds++;
+    updateTimerDisplay();
+    if (timerSeconds % 5 === 0) saveProgress(); // حفظ دوري بدون إثقال المتصفح
+  }, 1000);
+}
+
+// ---------- إيقاف مؤقت / استئناف ----------
+function setPaused(paused) {
+  isPaused = paused;
+  if (isPaused) {
+    pauseBtn.textContent = '▶️ استئناف';
+    pauseBtn.classList.add('active');
+    container.classList.add('paused');
+    pausedBanner.classList.remove('hidden');
+  } else {
+    pauseBtn.textContent = '⏸️ إيقاف مؤقت';
+    pauseBtn.classList.remove('active');
+    container.classList.remove('paused');
+    pausedBanner.classList.add('hidden');
+  }
+}
+
+pauseBtn.addEventListener('click', () => {
+  setPaused(!isPaused);
+  saveProgress();
+});
+
+document.getElementById('finish-btn').addEventListener('click', () => {
+  const total = parseInt(document.getElementById('total-count').innerText) || 0;
+  const unanswered = total - answeredCount;
+  const pct = answeredCount ? ((correctCount / answeredCount) * 100).toFixed(1) : 0;
+
+  document.getElementById('res-correct').innerText = correctCount;
+  document.getElementById('res-incorrect').innerText = incorrectCount;
+  document.getElementById('res-unanswered').innerText = unanswered;
+  document.getElementById('final-percentage').innerText = pct;
+
+  // اظهر زر المتابعة فقط لو فيه أسئلة ما انحلت
+  continueBtn.style.display = unanswered > 0 ? 'inline-block' : 'none';
+
+  resultsModal.classList.remove('hidden');
+  saveProgress();
+});
+
+continueBtn.addEventListener('click', () => {
+  resultsModal.classList.add('hidden');
+});
+
+document.getElementById('retest-incorrect-btn').addEventListener('click', () => {
+  initQuiz('incorrect'); // initQuiz نفسه يحفظ الحالة الجديدة فوق القديمة عند النجاح
+});
+document.getElementById('restart-full-btn').addEventListener('click', () => {
+  incorrectQuestions = [];
+  initQuiz('shuffle');
+});
+sectionFilter.addEventListener('change', () => {
+  initQuiz('all');
+});
+
+loadData().then(() => {
+  const saved = loadSavedProgress();
+  if (saved && saved.poolIds && saved.poolIds.length) {
+    restoreQuiz(saved);
+  } else {
+    initQuiz('all');
+  }
+});
