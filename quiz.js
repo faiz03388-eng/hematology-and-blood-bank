@@ -5,6 +5,10 @@ let quizData = [];
 let answeredCount = 0, correctCount = 0, incorrectCount = 0;
 let timerSeconds = 0, timerInterval;
 let incorrectQuestions = [];
+let currentPool = [];       // الأسئلة المعروضة حالياً بترتيبها
+let currentMode = 'all';
+let savedAnswers = {};      // { [questionId]: { selectedKey, correct } }
+let isPaused = false;
 
 const container = document.getElementById('quiz-container');
 const timerDisplay = document.getElementById('timer');
@@ -14,6 +18,39 @@ const incorrectDisplay = document.getElementById('incorrect-count');
 const progressBar = document.getElementById('progress-bar');
 const resultsModal = document.getElementById('results-modal');
 const sectionFilter = document.getElementById('section-filter');
+const pauseBtn = document.getElementById('pause-btn');
+const pausedBanner = document.getElementById('paused-banner');
+const continueBtn = document.getElementById('continue-btn');
+
+// ---------- حفظ/استرجاع التقدم من المتصفح ----------
+const STORAGE_KEY = 'boc_quiz_progress_v1';
+
+function saveProgress() {
+  try {
+    const state = {
+      poolIds: currentPool.map(q => q.id),
+      mode: currentMode,
+      filterValue: sectionFilter.value,
+      answers: savedAnswers,
+      answeredCount, correctCount, incorrectCount,
+      timerSeconds,
+      isPaused,
+      incorrectQuestions
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) { console.warn('تعذر حفظ التقدم:', e); }
+}
+
+function loadSavedProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function clearProgress() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+}
 
 async function loadData() {
   try {
@@ -55,7 +92,7 @@ async function loadData() {
         }
       }
 
-      // إزالة placeholder [TABLE] من نص السؤال لأن الصورة تُعرض تلقائياً تحت السؤال
+      // إزالة placeholder [TABLE] من نص السؤال لأن الصورة تُعرض تلقائيا تحت السؤال
       // وتحويل الأسطر الجديدة المتبقية إلى <br> عشان تظهر بشكل صحيح
       if (q.question && typeof q.question === 'string') {
         q.question = q.question
@@ -107,9 +144,41 @@ function initQuiz(mode = 'all') {
     }
   }
 
+  savedAnswers = {};
+  currentPool = pool;
+  currentMode = mode;
+
   render(pool);
   resetStats(pool.length);
+  setPaused(false);
   startTimer();
+  saveProgress();
+}
+
+function restoreQuiz(saved) {
+  const byId = new Map(quizData.map(q => [String(q.id), q]));
+  const pool = (saved.poolIds || []).map(id => byId.get(String(id))).filter(Boolean);
+  if (!pool.length) { initQuiz('all'); return; }
+
+  resultsModal.classList.add('hidden');
+  savedAnswers = saved.answers || {};
+  incorrectQuestions = saved.incorrectQuestions || [];
+  currentPool = pool;
+  currentMode = saved.mode || 'all';
+  if (saved.filterValue) sectionFilter.value = saved.filterValue;
+
+  render(pool);
+
+  answeredCount = saved.answeredCount || 0;
+  correctCount = saved.correctCount || 0;
+  incorrectCount = saved.incorrectCount || 0;
+  timerSeconds = saved.timerSeconds || 0;
+  document.getElementById('total-count').innerText = pool.length;
+  updateStats();
+  updateTimerDisplay();
+
+  setPaused(!!saved.isPaused);
+  if (!saved.isPaused) startTimer();
 }
 
 function render(questions) {
@@ -125,87 +194,4 @@ function render(questions) {
     block.innerHTML = `
       <div class="question-meta">${q.chapter || ''} ${q.section ? '— ' + q.section : ''} | #${q.id} ${reviewBadge}</div>
 
-      <div class="question-text">${i + 1}. ${q.question || ''}</div>
-
-      ${q.image ? `<img src="${q.image}" class="question-image" alt="question image">` : ''}
-
-      <ul class="options-list">
-        ${Object.entries(q.options || {}).map(([k, v]) => `<li class="option-item" data-key="${k}">${k}. ${v}</li>`).join('')}
-      </ul>
-
-      <div class="explanation-box hidden"><strong>الشرح:</strong> ${q.explanation || 'لا يوجد شرح متاح.'}</div>
-    `;
-
-    block.querySelectorAll('.option-item').forEach(opt => {
-      opt.addEventListener('click', () => handleAnswer(opt, block, q.id));
-    });
-
-    container.appendChild(block);
-  });
-
-  document.getElementById('total-count').innerText = questions.length;
-  updateStats();
-}
-
-function handleAnswer(selected, block, qId) {
-  if (selected.classList.contains('locked')) return;
-  const correctKey = block.dataset.answer;
-  const options = block.querySelectorAll('.option-item');
-  options.forEach(o => o.classList.add('locked'));
-
-  if (selected.dataset.key === correctKey) {
-    selected.classList.add('correct');
-    correctCount++;
-    incorrectQuestions = incorrectQuestions.filter(id => id !== qId);
-  } else {
-    selected.classList.add('incorrect');
-    options.forEach(o => { if (o.dataset.key === correctKey) o.classList.add('correct'); });
-    incorrectCount++;
-    if (!incorrectQuestions.includes(qId)) incorrectQuestions.push(qId);
-  }
-  answeredCount++;
-  updateStats();
-  const expl = block.querySelector('.explanation-box');
-  if (expl) expl.classList.remove('hidden');
-}
-
-function updateStats() {
-  answeredDisplay.innerText = answeredCount;
-  correctDisplay.innerText = correctCount;
-  incorrectDisplay.innerText = incorrectCount;
-  const total = parseInt(document.getElementById('total-count').innerText) || 1;
-  progressBar.style.width = `${(answeredCount / total) * 100}%`;
-}
-
-function resetStats(total) {
-  answeredCount = 0; correctCount = 0; incorrectCount = 0; timerSeconds = 0;
-  document.getElementById('total-count').innerText = total;
-  updateStats();
-}
-
-function startTimer() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    timerSeconds++;
-    const h = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
-    const m = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
-    const s = String(timerSeconds % 60).padStart(2, '0');
-    timerDisplay.innerText = `Time: ${h}:${m}:${s}`;
-  }, 1000);
-}
-
-document.getElementById('finish-btn').addEventListener('click', () => {
-  clearInterval(timerInterval);
-  const total = parseInt(document.getElementById('total-count').innerText);
-  document.getElementById('res-correct').innerText = correctCount;
-  document.getElementById('res-incorrect').innerText = incorrectCount;
-  document.getElementById('res-unanswered').innerText = total - answeredCount;
-  document.getElementById('final-percentage').innerText = total ? ((correctCount / total) * 100).toFixed(1) : 0;
-  resultsModal.classList.remove('hidden');
-});
-
-document.getElementById('retest-incorrect-btn').addEventListener('click', () => initQuiz('incorrect'));
-document.getElementById('restart-full-btn').addEventListener('click', () => initQuiz('shuffle'));
-sectionFilter.addEventListener('change', () => initQuiz('all'));
-
-loadData().then(() => initQuiz('all'));
+      <div class="question-text">${i + 1}. ${q.question || ''}
