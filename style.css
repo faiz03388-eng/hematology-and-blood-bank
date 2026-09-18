@@ -41,10 +41,6 @@ body {
     font-size: 0.9rem;
 }
 #finish-btn:hover, #pause-btn:hover, .modal-actions button:hover { background: #2563eb; }
-#pause-btn { background: #475569; }
-#pause-btn:hover { background: #334155; }
-#pause-btn.active { background: #d97706; }
-#pause-btn.active:hover { background: #b45309; }
 
 #paused-banner {
     max-width: 800px;
