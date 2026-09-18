@@ -348,6 +348,15 @@ sectionFilter.addEventListener('change', () => {
   initQuiz('all');
 });
 
+// ---------- كود زر إعادة ضبط العداد المضاف حديثاً ----------
+if (resetTimerBtn) {
+  resetTimerBtn.addEventListener('click', () => {
+    timerSeconds = 0;
+    updateTimerDisplay();
+    saveProgress();
+  });
+}
+
 loadData().then(() => {
   const saved = loadSavedProgress();
   if (saved && saved.poolIds && saved.poolIds.length) {
