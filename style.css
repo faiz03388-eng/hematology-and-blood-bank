@@ -172,3 +172,35 @@ body {
     border: 1px solid #334155;
     margin-bottom: 12px;
 }
+
+/* تنسيق عام لأزرار شريط التحكم العلوي */
+#reset-timer-btn, /* أو الكلاس الخاص بزر تصفير الوقت */
+.control-btn {
+    background-color: #2b3548; /* لون خلفية متناسق مع الثيم الداكن */
+    color: #ffffff;
+    border: 1px solid #3f4d67;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* تأثير عند المرور بالموءشر */
+#reset-timer-btn:hover,
+.control-btn:hover {
+    background-color: #3b4863;
+    border-color: #526388;
+}
+
+/* تنسيق الحاوية التي تحتضن الأزرار لتجنب التداخل */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
