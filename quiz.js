@@ -21,6 +21,7 @@ const sectionFilter = document.getElementById('section-filter');
 const pauseBtn = document.getElementById('pause-btn');
 const pausedBanner = document.getElementById('paused-banner');
 const continueBtn = document.getElementById('continue-btn');
+const resetTimerBtn = document.getElementById('reset-timer-btn');
 
 // ---------- حفظ/استرجاع التقدم من المتصفح ----------
 const STORAGE_KEY = 'boc_quiz_progress_v1';
