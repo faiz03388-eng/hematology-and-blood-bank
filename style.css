@@ -200,17 +200,3 @@ body {
     flex-wrap: wrap;
 }
 
-/* تثبيت شكل ولون زر الإيقاف المؤقت ليبقى كما كان دائماً */
-#pause-btn {
-    background: #475569 !important; /* لون الخلفية الثابت */
-    color: white !important;
-    border: none !important;
-}
-
-/* إلغاء تغيير اللون عند مرور المؤشر أو الضغط عليه */
-#pause-btn:hover,
-#pause-btn:active,
-#pause-btn.active,
-#pause-btn.active:hover {
-    background: #475569 !important; /* يبقى نفس اللون الثابت لا يتغير */
-}
