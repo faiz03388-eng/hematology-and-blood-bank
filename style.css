@@ -30,7 +30,8 @@ body {
 .counters span { margin-right: 12px; color: #94a3b8; }
 .counters b { color: #f1f5f9; }
 
-#finish-btn, #pause-btn, .modal-actions button, #chapter-select button {
+#finish-btn:hover, #pause-btn:hover, #reset-timer-btn:hover, .modal-actions button:hover { background: #2563eb; }
+
     background: #3b82f6;
     color: white;
     border: none;
@@ -48,7 +49,7 @@ body {
 #paused-banner {
     max-width: 800px;
     margin: 12px auto 0;
-    padding: 10px 16px;
+    padding: 10px 16px; 
     background: #78350f;
     color: #fcd34d;
     border-radius: 8px;
