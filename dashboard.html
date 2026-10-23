@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة التحكم</title>
+<style>
+body { font-family:sans-serif; background:#f5f5f5; margin:0; padding:0 }
+#box { max-width:600px; margin:40px auto; background:#fff; padding:20px; border-radius:10px }
+button { padding:10px 15px; margin:5px 0; width:100% }
+pre { background:#eee; padding:10px; border-radius:6px; overflow:auto }
+</style>
+</head>
+<body>
+
+<div id="box">
+  <h2>لوحة التحكم</h2>
+  <p>مرحبًا يا مشرف 👑</p>
+
+  <h3>📘 الاختبارات الموجودة في GitHub</h3>
+  <button id="loadTests">تحميل الاختبارات</button>
+  <div id="tests"></div>
+
+  <h3>👥 إدارة المستخدمين</h3>
+  <button id="addUser">إضافة مستخدم جديد</button>
+  <button id="delUser">حذف مستخدم</button>
+
+  <h3>📱 الأجهزة المرتبطة</h3>
+  <button id="showDevices">عرض الأجهزة</button>
+  <div id="devices"></div>
+
+  <button id="logout" style="background:#c00;color:#fff">تسجيل الخروج</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged, createUserWithEmailAndPassword, deleteUser }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, getDocs }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCgmY-C4e65Xx7Nwhpyp7YQBfnviHsNMfE",
+  authDomain: "exams-9e31f.firebaseapp.com",
+  projectId: "exams-9e31f",
+  appId: "1:1012309682887:web:a17ccb73df2cda4a00ece2"
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+onAuthStateChanged(auth, user => {
+  if (!user) location.href = "index.html";
+});
+
+document.getElementById("logout").onclick = () => signOut(auth);
+
+document.getElementById("loadTests").onclick = async () => {
+  const url = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/tests.json";
+  const res = await fetch(url);
+  const data = await res.json();
+
+  let html = "";
+  data.tests.forEach(t => {
+    html += `<div style="padding:10px;border-bottom:1px solid #ddd">
+              <strong>${t.name}</strong>
+              <pre>${JSON.stringify(t.questions, null, 2)}</pre>
+            </div>`;
+  });
+  document.getElementById("tests").innerHTML = html;
+};
+
+document.getElementById("showDevices").onclick = async () => {
+  const snap = await getDocs(collection(db, "devices"));
+  let html = "";
+  snap.forEach(doc => {
+    html += `<p><strong>${doc.id}</strong>: ${doc.data().deviceId}</p>`;
+  });
+  document.getElementById("devices").innerHTML = html;
+};
+
+document.getElementById("addUser").onclick = async () => {
+  const id = prompt("المعرّف:");
+  const pw = prompt("كلمة المرور:");
+  await createUserWithEmailAndPassword(auth, id + "@example.com", pw);
+  alert("تم إضافة المستخدم");
+};
+
+document.getElementById("delUser").onclick = async () => {
+  const user = auth.currentUser;
+  await deleteUser(user);
+  alert("تم حذف المستخدم");
+};
+</script>
+
+</body>
+</html>
