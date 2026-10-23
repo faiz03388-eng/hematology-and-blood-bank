@@ -98,5 +98,96 @@ $("btn").onclick = async () => {
 };
 $("out").onclick = () => signOut(auth);
 </script>
+  <div id="gx-gate" style="position:fixed;inset:0;z-index:2147483647;background:#fff;overflow:auto;direction:rtl;font-family:sans-serif">
+  <div id="gx-loading" style="text-align:center;margin:60px">جارٍ التحقق...</div>
+  <div id="gx-login" style="display:none;max-width:320px;margin:40px auto;text-align:center">
+    <h3>تسجيل الدخول</h3>
+    <input id="gx-uid" placeholder="المعرّف" style="width:100%;padding:10px;margin:6px 0;box-sizing:border-box">
+    <input id="gx-pw" type="password" placeholder="كلمة المرور" style="width:100%;padding:10px;margin:6px 0;box-sizing:border-box">
+    <label style="display:block;margin:4px 0 10px;font-size:14px">
+      <input type="checkbox" id="gx-show"> إظهار كلمة المرور
+    </label>
+    <button id="gx-btn" style="width:100%;padding:10px">دخول</button>
+    <p id="gx-msg" style="color:#c00"></p>
+  </div>
+</div>
+<button id="gx-out" style="display:none;position:fixed;bottom:8px;left:8px;z-index:2147483646;padding:6px 10px;font-size:12px;opacity:.7">تسجيل الخروج</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCgmY-C4e65Xx7Nwhpyp7YQBfnviHsNMfE",
+  authDomain: "exams-9e31f.firebaseapp.com",
+  projectId: "exams-9e31f",
+  appId: "1:1012309682887:web:a17ccb73df2cda4a00ece2"
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+
+function show(which) {
+  $("gx-gate").style.display = which === "quiz" ? "none" : "block";
+  $("gx-loading").style.display = which === "loading" ? "block" : "none";
+  $("gx-login").style.display = which === "login" ? "block" : "none";
+  $("gx-out").style.display = which === "quiz" ? "block" : "none";
+}
+
+function localDeviceId() {
+  let id = null;
+  try { id = localStorage.getItem("deviceId"); } catch (e) {}
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID()
+       : Date.now() + "-" + Math.random().toString(36).slice(2);
+    try { localStorage.setItem("deviceId", id); } catch (e) {}
+  }
+  return id;
+}
+
+async function checkDevice(user) {
+  try {
+    const ref = doc(db, "devices", user.uid);
+    const snap = await getDoc(ref);
+    const mine = localDeviceId();
+    if (!snap.exists()) {
+      await setDoc(ref, { deviceId: mine });
+      return "ok";
+    }
+    return snap.data().deviceId === mine ? "ok" : "other";
+  } catch (e) {
+    return "error";
+  }
+}
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { show("login"); return; }
+  show("loading");
+  const result = await checkDevice(user);
+  if (result === "ok") { show("quiz"); return; }
+  await signOut(auth);
+  $("gx-msg").textContent = result === "other"
+    ? "هذا الحساب مرتبط بجهاز آخر. تواصل مع المشرف."
+    : "تعذر التحقق، تأكد من الاتصال وأعد المحاولة.";
+});
+
+$("gx-show").onchange = e => {
+  $("gx-pw").type = e.target.checked ? "text" : "password";
+};
+
+$("gx-btn").onclick = async () => {
+  $("gx-msg").textContent = "";
+  try {
+    await signInWithEmailAndPassword(auth, $("gx-uid").value.trim() + "@example.com", $("gx-pw").value);
+  } catch (e) {
+    $("gx-msg").textContent = "بيانات الدخول غير صحيحة";
+  }
+};
+$("gx-out").onclick = () => signOut(auth);
+</script>
+
 </body>
 </html>
