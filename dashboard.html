@@ -7,8 +7,9 @@
 <style>
 body { font-family:sans-serif; background:#f5f5f5; margin:0; padding:0 }
 #box { max-width:600px; margin:40px auto; background:#fff; padding:20px; border-radius:10px }
-button { padding:10px 15px; margin:5px 0; width:100% }
-pre { background:#eee; padding:10px; border-radius:6px; overflow:auto }
+button { padding:12px; margin:8px 0; width:100%; font-size:16px; cursor:pointer }
+.section-title { margin-top:25px; font-size:18px; font-weight:bold }
+#devices p { background:#eee; padding:8px; border-radius:6px; }
 </style>
 </head>
 <body>
@@ -17,19 +18,24 @@ pre { background:#eee; padding:10px; border-radius:6px; overflow:auto }
   <h2>لوحة التحكم</h2>
   <p>مرحبًا يا مشرف 👑</p>
 
-  <h3>📘 الاختبارات الموجودة في GitHub</h3>
-  <button id="loadTests">تحميل الاختبارات</button>
-  <div id="tests"></div>
+  <!-- المسارات -->
+  <div class="section-title">📚 المسارات</div>
 
-  <h3>👥 إدارة المستخدمين</h3>
+  <button onclick="location.href='health.html'">المسار الصحي</button>
+  <button onclick="location.href='science.html'">المسار العلمي</button>
+  <button onclick="location.href='humanity.html'">المسار الإنساني</button>
+
+  <!-- إدارة المستخدمين -->
+  <div class="section-title">👥 إدارة المستخدمين</div>
   <button id="addUser">إضافة مستخدم جديد</button>
   <button id="delUser">حذف مستخدم</button>
 
-  <h3>📱 الأجهزة المرتبطة</h3>
+  <!-- الأجهزة -->
+  <div class="section-title">📱 الأجهزة المرتبطة</div>
   <button id="showDevices">عرض الأجهزة</button>
   <div id="devices"></div>
 
-  <button id="logout" style="background:#c00;color:#fff">تسجيل الخروج</button>
+  <button id="logout" style="background:#c00;color:#fff;margin-top:25px">تسجيل الخروج</button>
 </div>
 
 <script type="module">
@@ -45,30 +51,19 @@ const app = initializeApp({
   projectId: "exams-9e31f",
   appId: "1:1012309682887:web:a17ccb73df2cda4a00ece2"
 });
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// منع الدخول بدون تسجيل
 onAuthStateChanged(auth, user => {
   if (!user) location.href = "index.html";
 });
 
+// تسجيل خروج
 document.getElementById("logout").onclick = () => signOut(auth);
 
-document.getElementById("loadTests").onclick = async () => {
-  const url = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/tests.json";
-  const res = await fetch(url);
-  const data = await res.json();
-
-  let html = "";
-  data.tests.forEach(t => {
-    html += `<div style="padding:10px;border-bottom:1px solid #ddd">
-              <strong>${t.name}</strong>
-              <pre>${JSON.stringify(t.questions, null, 2)}</pre>
-            </div>`;
-  });
-  document.getElementById("tests").innerHTML = html;
-};
-
+// عرض الأجهزة
 document.getElementById("showDevices").onclick = async () => {
   const snap = await getDocs(collection(db, "devices"));
   let html = "";
@@ -78,6 +73,7 @@ document.getElementById("showDevices").onclick = async () => {
   document.getElementById("devices").innerHTML = html;
 };
 
+// إضافة مستخدم
 document.getElementById("addUser").onclick = async () => {
   const id = prompt("المعرّف:");
   const pw = prompt("كلمة المرور:");
@@ -85,6 +81,7 @@ document.getElementById("addUser").onclick = async () => {
   alert("تم إضافة المستخدم");
 };
 
+// حذف مستخدم
 document.getElementById("delUser").onclick = async () => {
   const user = auth.currentUser;
   await deleteUser(user);
