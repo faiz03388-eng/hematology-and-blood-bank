@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تجربة الدخول</title>
+</head>
+<body>
+<div id="login" style="max-width:320px;margin:40px auto;text-align:center;font-family:sans-serif">
+  <h3>تسجيل الدخول</h3>
+  <input id="uid" placeholder="المعرّف" style="width:100%;padding:10px;margin:6px 0">
+  <input id="pw" type="password" placeholder="كلمة المرور" style="width:100%;padding:10px;margin:6px 0">
+  <button id="btn" style="width:100%;padding:10px">دخول</button>
+  <p id="msg" style="color:#c00"></p>
+</div>
+
+<div id="quiz" style="display:none;text-align:center;font-family:sans-serif">
+  <h3>تم تسجيل الدخول بنجاح ✅</h3>
+  <button id="out">تسجيل الخروج</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCgmY-C4e65Xx7Nwhpyp7YQBfnviHsNMfE",
+  authDomain: "exams-9e31f.firebaseapp.com",
+  projectId: "exams-9e31f",
+  appId: "1:1012309682887:web:a17ccb73df2cda4a00ece2"
+});
+const auth = getAuth(app);
+const $ = id => document.getElementById(id);
+
+onAuthStateChanged(auth, user => {
+  $("login").style.display = user ? "none" : "block";
+  $("quiz").style.display = user ? "block" : "none";
+});
+
+$("btn").onclick = async () => {
+  $("msg").textContent = "";
+  try {
+    await signInWithEmailAndPassword(auth, $("uid").value.trim() + "@example.com", $("pw").value);
+  } catch (e) {
+    $("msg").textContent = "بيانات الدخول غير صحيحة";
+  }
+};
+$("out").onclick = () => signOut(auth);
+</script>
+</body>
+</html>
