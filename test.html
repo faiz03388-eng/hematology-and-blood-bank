@@ -6,10 +6,15 @@
 <title>تجربة الدخول</title>
 </head>
 <body>
-<div id="login" style="max-width:320px;margin:40px auto;text-align:center;font-family:sans-serif">
+<div id="loading" style="text-align:center;margin:60px;font-family:sans-serif">جارٍ التحقق...</div>
+
+<div id="login" style="display:none;max-width:320px;margin:40px auto;text-align:center;font-family:sans-serif">
   <h3>تسجيل الدخول</h3>
   <input id="uid" placeholder="المعرّف" style="width:100%;padding:10px;margin:6px 0">
   <input id="pw" type="password" placeholder="كلمة المرور" style="width:100%;padding:10px;margin:6px 0">
+  <label style="display:block;margin:4px 0 10px;font-size:14px">
+    <input type="checkbox" id="show"> إظهار كلمة المرور
+  </label>
   <button id="btn" style="width:100%;padding:10px">دخول</button>
   <p id="msg" style="color:#c00"></p>
 </div>
@@ -23,6 +28,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCgmY-C4e65Xx7Nwhpyp7YQBfnviHsNMfE",
@@ -31,12 +38,55 @@ const app = initializeApp({
   appId: "1:1012309682887:web:a17ccb73df2cda4a00ece2"
 });
 const auth = getAuth(app);
+const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 
-onAuthStateChanged(auth, user => {
-  $("login").style.display = user ? "none" : "block";
-  $("quiz").style.display = user ? "block" : "none";
+function show(which) {
+  $("loading").style.display = which === "loading" ? "block" : "none";
+  $("login").style.display   = which === "login"   ? "block" : "none";
+  $("quiz").style.display    = which === "quiz"    ? "block" : "none";
+}
+
+function localDeviceId() {
+  let id = null;
+  try { id = localStorage.getItem("deviceId"); } catch (e) {}
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID()
+       : Date.now() + "-" + Math.random().toString(36).slice(2);
+    try { localStorage.setItem("deviceId", id); } catch (e) {}
+  }
+  return id;
+}
+
+async function checkDevice(user) {
+  try {
+    const ref = doc(db, "devices", user.uid);
+    const snap = await getDoc(ref);
+    const mine = localDeviceId();
+    if (!snap.exists()) {
+      await setDoc(ref, { deviceId: mine });
+      return "ok";
+    }
+    return snap.data().deviceId === mine ? "ok" : "other";
+  } catch (e) {
+    return "error";
+  }
+}
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { show("login"); return; }
+  show("loading");
+  const result = await checkDevice(user);
+  if (result === "ok") { show("quiz"); return; }
+  await signOut(auth);
+  $("msg").textContent = result === "other"
+    ? "هذا الحساب مرتبط بجهاز آخر. تواصل مع المشرف."
+    : "تعذر التحقق، تأكد من الاتصال وأعد المحاولة.";
 });
+
+$("show").onchange = e => {
+  $("pw").type = e.target.checked ? "text" : "password";
+};
 
 $("btn").onclick = async () => {
   $("msg").textContent = "";
